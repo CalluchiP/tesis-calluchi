@@ -87,6 +87,8 @@ docs/REGLAS_RIESGO.md     reglas que un contador debe validar
 
 ## Despliegue en Render
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/CalluchiP/tesis-calluchi)
+
 El repositorio incluye `render.yaml` (servicio web + PostgreSQL). En Render:
 
 1. **New → Blueprint** y conectar `CalluchiP/tesis-calluchi`.
