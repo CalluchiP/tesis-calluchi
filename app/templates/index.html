@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Riesgo tributario · Mesa de evaluación</title>
+  <meta name="description" content="Mesa de evaluación de riesgo tributario para contadores">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <!-- ============================== LOGIN ============================== -->
+  <div id="loginView" class="login-page">
+    <aside class="login-aside">
+      <div class="aside-top">
+        <span class="brand-mark">RT</span>
+        <div class="brand-copy">
+          <strong>Riesgo tributario</strong>
+          <span>Mesa de evaluación · UPAO</span>
+        </div>
+      </div>
+
+      <div class="aside-body">
+        <p class="eyebrow light">Tesis · Trujillo 2026</p>
+        <h1>Evaluar con criterio.<br>Documentar con evidencia.</h1>
+        <p class="aside-lead">
+          Una mesa de trabajo para revisar señales de riesgo tributario en casos
+          anonimizados, explicar qué revisar y medir el tiempo y el costo de cada evaluación.
+        </p>
+        <ol class="method">
+          <li><span>01</span><div><strong>Caso anonimizado</strong><small>Sin RUC, DNI ni razón social.</small></div></li>
+          <li><span>02</span><div><strong>Señales explicadas</strong><small>Reglas expertas y modelo de ML.</small></div></li>
+          <li><span>03</span><div><strong>Reporte y evidencia</strong><small>Resultado explicado y trazable.</small></div></li>
+        </ol>
+      </div>
+
+      <div class="aside-foot">
+        <span>Prototipo de validación técnica</span>
+        <span>No sustituye el criterio profesional</span>
+      </div>
+    </aside>
+
+    <main class="login-main">
+      <div class="auth-box">
+        <div class="auth-heading">
+          <p class="eyebrow">Acceso</p>
+          <h2>Mesa de evaluación</h2>
+          <p>Ingresa con tu cuenta de contador para abrir un caso.</p>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Acceso">
+          <button type="button" class="auth-tab active" id="tabLogin" role="tab" aria-selected="true">Ingresar</button>
+          <button type="button" class="auth-tab" id="tabRegister" role="tab" aria-selected="false">Crear cuenta</button>
+        </div>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <label class="field">
+            <span class="label">Correo electrónico</span>
+            <input type="email" id="loginEmail" autocomplete="username" required placeholder="contador@estudio.pe">
+          </label>
+          <label class="field">
+            <span class="label">Contraseña</span>
+            <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Mínimo 8 caracteres">
+          </label>
+          <button type="submit" class="btn btn-primary btn-wide">Ingresar a la mesa</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden" novalidate>
+          <label class="field">
+            <span class="label">Nombre</span>
+            <input type="text" id="regName" autocomplete="name" required maxlength="120" placeholder="Nombre del contador">
+          </label>
+          <label class="field">
+            <span class="label">Correo electrónico</span>
+            <input type="email" id="regEmail" autocomplete="email" required placeholder="contador@estudio.pe">
+          </label>
+          <div class="form-row">
+            <label class="field">
+              <span class="label">Contraseña <small>mín. 8</small></span>
+              <input type="password" id="regPassword" autocomplete="new-password" minlength="8" required>
+            </label>
+            <label class="field">
+              <span class="label">Tarifa S/ por hora <small>opcional</small></span>
+              <input type="number" id="regTarifa" min="1" max="10000" step="0.01" placeholder="35">
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-wide">Crear cuenta e ingresar</button>
+        </form>
+
+        <p class="form-error hidden" id="authError" role="alert"></p>
+        <p class="auth-note">
+          Usa datos ficticios. El sistema no debe almacenar RUC, DNI ni razón social real.
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================== APP ============================== -->
+  <div id="appView" class="app hidden">
+    <aside class="rail">
+      <div class="rail-brand">
+        <span class="brand-mark small">RT</span>
+        <div class="brand-copy">
+          <strong>Riesgo tributario</strong>
+          <span>Mesa de evaluación</span>
+        </div>
+      </div>
+
+      <nav class="rail-nav" aria-label="Secciones">
+        <button type="button" class="nav-item active" data-nav="nuevo">
+          <span class="nav-num">01</span><span>Nuevo caso</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="historial">
+          <span class="nav-num">02</span><span>Historial</span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">
+        <div class="user-chip">
+          <span class="user-avatar" id="userInitial">C</span>
+          <div>
+            <strong id="userName">Contador</strong>
+            <small id="userMeta">S/ 35.00/h</small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-small" id="btnLogout">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topline">
+        <div>
+          <p class="eyebrow" id="pageKicker">Expediente</p>
+          <h1 id="pageTitle">Nuevo caso</h1>
+        </div>
+        <div class="topline-meta">
+          <span class="status-pill" id="sessionPill">Sesión sin iniciar</span>
+          <span class="status-pill quiet" id="modelPill">Modelo —</span>
+        </div>
+      </header>
+
+      <!-- ---------------------------- NUEVO CASO ---------------------------- -->
+      <section id="viewNuevo" class="view">
+        <div class="case-head">
+          <div>
+            <p class="muted">
+              Registra un caso de 12 meses. Puedes subir los registros o completar el formulario.
+              La referencia es un alias, nunca un dato real.
+            </p>
+          </div>
+          <div class="timer-box">
+            <span class="label">Tiempo de sesión</span>
+            <strong id="sessionTimer">00:00</strong>
+            <button type="button" class="link-btn" id="btnRestartCase">Reiniciar caso</button>
+          </div>
+        </div>
+
+        <div class="mode-tabs" role="tablist" aria-label="Forma de ingreso">
+          <button type="button" class="mode-tab active" data-tab="archivos" role="tab" aria-selected="true">Subir archivos</button>
+          <button type="button" class="mode-tab" data-tab="guiado" role="tab" aria-selected="false">Formulario guiado</button>
+        </div>
+
+        <!-- Archivos -->
+        <div id="panelArchivos" class="mode-panel">
+          <form id="fileForm" class="sheet" novalidate>
+            <div class="sheet-head">
+              <div>
+                <p class="eyebrow">Paso único</p>
+                <h2>Registros del caso</h2>
+              </div>
+              <span class="hint">CSV o Excel · 12 meses</span>
+            </div>
+
+            <!-- TEMPORAL: caso de ejemplo para probar el flujo de archivos -->
+            <div class="example-strip">
+              <span><strong>Modo prueba:</strong> carga ventas, PDT 621 y compras de 12 meses.</span>
+              <button type="button" class="btn btn-secondary btn-small" id="btnCasoEjemplo">Cargar caso de ejemplo</button>
+            </div>
+
+            <fieldset class="fieldset">
+              <legend>Datos de la empresa</legend>
+              <div class="form-grid">
+                <label class="field wide">
+                  <span class="label">Referencia del caso</span>
+                  <input type="text" data-field="referencia" maxlength="120" placeholder="Caso-2026-001">
+                  <small class="field-help">Alias anonimizado. No uses RUC, DNI ni razón social.</small>
+                </label>
+                <label class="field">
+                  <span class="label">Régimen tributario</span>
+                  <select data-field="regimen" required></select>
+                  <small class="field-error" data-error-for="regimen"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Rubro</span>
+                  <select data-field="rubro" required></select>
+                  <small class="field-help" data-margin-for="rubro"></small>
+                  <small class="field-error" data-error-for="rubro"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Antigüedad (años)</span>
+                  <input type="number" data-field="antiguedad_anios" min="0" max="80" step="0.1" required placeholder="8">
+                  <small class="field-error" data-error-for="antiguedad_anios"></small>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>Archivos</legend>
+              <div class="upload-grid">
+                <label class="dropzone">
+                  <input type="file" id="fileVentas" accept=".csv,.xlsx,.xls" hidden>
+                  <span class="dz-tag">Obligatorio</span>
+                  <strong>Registro de ventas</strong>
+                  <small>periodo · base_imponible · estado</small>
+                  <span class="dz-file" id="nameVentas">Seleccionar archivo</span>
+                </label>
+                <label class="dropzone">
+                  <input type="file" id="filePdt" accept=".csv,.xlsx,.xls" hidden>
+                  <span class="dz-tag">Obligatorio</span>
+                  <strong>PDT 621</strong>
+                  <small>periodo · ventas_declaradas · compras_declaradas</small>
+                  <span class="dz-file" id="namePdt">Seleccionar archivo</span>
+                </label>
+                <label class="dropzone">
+                  <input type="file" id="fileCompras" accept=".csv,.xlsx,.xls" hidden>
+                  <span class="dz-tag optional">Opcional</span>
+                  <strong>Registro de compras</strong>
+                  <small>periodo · base_imponible · estado_proveedor · deducible</small>
+                  <span class="dz-file" id="nameCompras">Seleccionar archivo</span>
+                </label>
+              </div>
+              <div class="template-links">
+                <span>Plantillas:</span>
+                <a href="/api/plantillas/ventas.csv" target="_blank" rel="noopener">Ventas</a>
+                <a href="/api/plantillas/pdt621.csv" target="_blank" rel="noopener">PDT 621</a>
+                <a href="/api/plantillas/compras.csv" target="_blank" rel="noopener">Compras</a>
+              </div>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend>Cumplimiento y ajustes</legend>
+              <div class="form-grid">
+                <label class="field">
+                  <span class="label">Meses fuera de plazo <small>0–12</small></span>
+                  <input type="number" data-field="meses_fuera_plazo" min="0" max="12" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="meses_fuera_plazo"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Multas previas</span>
+                  <input type="number" data-field="multas_previas" min="0" max="50" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="multas_previas"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Meses con saldo a favor <small>0–12</small></span>
+                  <input type="number" data-field="meses_saldo_favor" min="0" max="12" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="meses_saldo_favor"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Compras a proveedores de riesgo <small>opcional</small></span>
+                  <input type="number" data-field="compras_proveedores_riesgo" min="0" step="0.01" placeholder="0">
+                  <small class="field-help">Si no subes compras, indícalo aquí.</small>
+                  <small class="field-error" data-error-for="compras_proveedores_riesgo"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Gastos no deducibles <small>opcional</small></span>
+                  <input type="number" data-field="gastos_no_deducibles" min="0" step="0.01" placeholder="0">
+                  <small class="field-help">Si no subes compras, indícalo aquí.</small>
+                  <small class="field-error" data-error-for="gastos_no_deducibles"></small>
+                </label>
+              </div>
+            </fieldset>
+
+            <p class="form-error hidden" id="fileError" role="alert"></p>
+            <div class="sheet-actions">
+              <span class="hint">El conteo de T empieza al abrir el caso.</span>
+              <button type="submit" class="btn btn-primary" id="btnFileSubmit">Procesar archivos</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Formulario guiado -->
+        <div id="panelGuiado" class="mode-panel hidden">
+          <form id="guideForm" class="sheet" novalidate>
+            <div class="sheet-head">
+              <div>
+                <p class="eyebrow">Tres pasos</p>
+                <h2>Formulario guiado</h2>
+              </div>
+              <span class="hint">Montos de 12 meses en soles</span>
+            </div>
+
+            <ol class="steps" aria-label="Pasos">
+              <li><button type="button" class="step active" data-step-btn="1"><span>01</span><div>Empresa<small>Identificación</small></div></button></li>
+              <li><button type="button" class="step" data-step-btn="2"><span>02</span><div>Ventas y compras<small>Montos del período</small></div></button></li>
+              <li><button type="button" class="step" data-step-btn="3"><span>03</span><div>Cumplimiento<small>Declaraciones</small></div></button></li>
+            </ol>
+
+            <div class="step-panel" data-step="1">
+              <div class="form-grid">
+                <label class="field wide">
+                  <span class="label">Referencia del caso</span>
+                  <input type="text" data-field="referencia" maxlength="120" placeholder="Caso-2026-001">
+                  <small class="field-help">Alias anonimizado. No uses RUC, DNI ni razón social.</small>
+                </label>
+                <label class="field">
+                  <span class="label">Régimen tributario</span>
+                  <select data-field="regimen" required></select>
+                  <small class="field-error" data-error-for="regimen"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Rubro</span>
+                  <select data-field="rubro" required></select>
+                  <small class="field-help" data-margin-for="rubro"></small>
+                  <small class="field-error" data-error-for="rubro"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Antigüedad (años)</span>
+                  <input type="number" data-field="antiguedad_anios" min="0" max="80" step="0.1" required placeholder="8">
+                  <small class="field-error" data-error-for="antiguedad_anios"></small>
+                </label>
+              </div>
+            </div>
+
+            <div class="step-panel hidden" data-step="2">
+              <div class="form-grid">
+                <label class="field">
+                  <span class="label">Ventas según comprobantes</span>
+                  <div class="money"><span>S/</span><input type="number" data-field="ventas_comprobantes" min="0" step="0.01" required placeholder="600000"></div>
+                  <small class="field-help">Total emitido en 12 meses.</small>
+                  <small class="field-error" data-error-for="ventas_comprobantes"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Ventas declaradas en PDT 621</span>
+                  <div class="money"><span>S/</span><input type="number" data-field="ventas_declaradas" min="0" step="0.01" required placeholder="600000"></div>
+                  <small class="field-error" data-error-for="ventas_declaradas"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Compras declaradas</span>
+                  <div class="money"><span>S/</span><input type="number" data-field="compras_declaradas" min="0" step="0.01" required placeholder="468000"></div>
+                  <small class="field-error" data-error-for="compras_declaradas"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Compras a proveedores de riesgo</span>
+                  <div class="money"><span>S/</span><input type="number" data-field="compras_proveedores_riesgo" min="0" step="0.01" required placeholder="0"></div>
+                  <small class="field-help">No habidos, de baja o sospechosos.</small>
+                  <small class="field-error" data-error-for="compras_proveedores_riesgo"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Gastos no deducibles</span>
+                  <div class="money"><span>S/</span><input type="number" data-field="gastos_no_deducibles" min="0" step="0.01" required placeholder="1000"></div>
+                  <small class="field-error" data-error-for="gastos_no_deducibles"></small>
+                </label>
+              </div>
+              <div class="preview" id="guidePreview">
+                <span class="preview-title">Vista preliminar</span>
+                <span>Brecha de ventas <strong id="previewBrecha">—</strong></span>
+                <span>Compras de riesgo <strong id="previewRiesgo">—</strong></span>
+                <span>Margen estimado <strong id="previewMargen">—</strong></span>
+              </div>
+            </div>
+
+            <div class="step-panel hidden" data-step="3">
+              <div class="form-grid">
+                <label class="field">
+                  <span class="label">Meses declarados fuera de plazo <small>0–12</small></span>
+                  <input type="number" data-field="meses_fuera_plazo" min="0" max="12" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="meses_fuera_plazo"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Multas previas</span>
+                  <input type="number" data-field="multas_previas" min="0" max="50" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="multas_previas"></small>
+                </label>
+                <label class="field">
+                  <span class="label">Meses con saldo a favor <small>0–12</small></span>
+                  <input type="number" data-field="meses_saldo_favor" min="0" max="12" step="1" required placeholder="0">
+                  <small class="field-error" data-error-for="meses_saldo_favor"></small>
+                </label>
+              </div>
+              <div class="review-note">
+                <strong>Antes de evaluar</strong>
+                <p>El resultado es una señal de alerta, no una determinación tributaria. Revisa las alertas y corrige el costo si tu criterio lo requiere.</p>
+              </div>
+            </div>
+
+            <p class="form-error hidden" id="guideError" role="alert"></p>
+            <div class="sheet-actions">
+              <button type="button" class="btn btn-ghost" id="btnPrevStep">Anterior</button>
+              <div class="actions-right">
+                <button type="button" class="btn btn-secondary" id="btnNextStep">Siguiente</button>
+                <button type="submit" class="btn btn-primary hidden" id="btnGuideSubmit">Evaluar riesgo</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ---------------------------- RESULTADO ---------------------------- -->
+      <section id="viewResultado" class="view hidden">
+        <div class="result-head">
+          <div>
+            <h2>Resultado de la evaluación</h2>
+            <p class="muted" id="resReference">—</p>
+            <p class="micro" id="resMeta">—</p>
+          </div>
+          <div class="result-actions">
+            <button type="button" class="btn btn-ghost" id="btnReport">Ver reporte</button>
+            <button type="button" class="btn btn-secondary" id="btnResultNew">Nuevo caso</button>
+          </div>
+        </div>
+
+        <div class="verdict-grid">
+          <div class="verdict-card">
+            <div class="seal" id="riskSeal" data-risk="Bajo">
+              <span id="resLevel">—</span>
+              <small>nivel de riesgo</small>
+            </div>
+            <div class="verdict-copy">
+              <p class="eyebrow">Probabilidad de la clase</p>
+              <strong class="big-prob" id="resProb">—</strong>
+              <div class="prob-bars" id="probBars"></div>
+            </div>
+          </div>
+
+          <div class="metric-strip">
+            <div class="metric">
+              <span class="label">Tiempo de evaluación</span>
+              <strong id="resTime">—</strong>
+              <small id="resMethod">—</small>
+            </div>
+            <div class="metric">
+              <span class="label">Costo final</span>
+              <strong id="costFinal">—</strong>
+              <small id="costCalc">—</small>
+              <div class="cost-actions">
+                <button type="button" class="link-btn" id="btnCostEdit">Corregir costo</button>
+                <button type="button" class="link-btn hidden" id="btnCostReset">Restablecer</button>
+              </div>
+            </div>
+            <div class="metric">
+              <span class="label">Modelo</span>
+              <strong id="resModel">—</strong>
+              <small>Validación técnica</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="cost-editor hidden" id="costEditor">
+          <label class="field">
+            <span class="label">Costo corregido (S/)</span>
+            <input type="number" id="costInput" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <button type="button" class="btn btn-primary btn-small" id="btnCostSave">Guardar corrección</button>
+          <span class="hint">Deja vacío para volver al costo calculado.</span>
+        </div>
+
+        <div class="result-columns">
+          <section class="sheet">
+            <div class="sheet-head">
+              <div><p class="eyebrow">Explicación</p><h2>Alertas y qué revisar</h2></div>
+              <span class="hint">Ordenadas por severidad</span>
+            </div>
+            <div id="alertsList" class="alerts"></div>
+          </section>
+
+          <aside class="side-stack">
+            <section class="sheet">
+              <div class="sheet-head"><h2>Variables influyentes</h2></div>
+              <ul id="influencesList" class="influence-list"></ul>
+            </section>
+            <section class="sheet hidden" id="avisosBox">
+              <div class="sheet-head"><h2>Notas de calidad</h2></div>
+              <ul id="avisosList" class="plain-list"></ul>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ---------------------------- HISTORIAL ---------------------------- -->
+      <section id="viewHistorial" class="view hidden">
+        <div class="section-head">
+          <div>
+            <p class="muted">Evaluaciones registradas por tu usuario.</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-small" id="btnRefreshHistory">Actualizar</button>
+        </div>
+        <div class="sheet table-sheet">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Referencia</th><th>Fecha</th><th>Origen</th><th>Nivel</th><th>Prob.</th><th>Tiempo</th><th>Costo</th><th></th></tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="9" class="empty-cell">Cargando historial…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

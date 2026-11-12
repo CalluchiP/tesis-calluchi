@@ -1,0 +1,13 @@
+periodo,proveedor_ref,base_imponible,estado_proveedor,deducible
+2025-01,PROV-001,20000.00,no habido,no
+2025-02,PROV-002,20000.00,no habido,no
+2025-03,PROV-003,20000.00,no habido,no
+2025-04,PROV-004,20000.00,no habido,no
+2025-05,PROV-005,20000.00,no habido,no
+2025-06,PROV-006,20000.00,no habido,no
+2025-07,PROV-007,19000.00,habido,si
+2025-08,PROV-008,19000.00,habido,si
+2025-09,PROV-009,19000.00,habido,si
+2025-10,PROV-010,19000.00,habido,si
+2025-11,PROV-011,19000.00,habido,si
+2025-12,PROV-012,19000.00,habido,si

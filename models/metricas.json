@@ -1,0 +1,99 @@
+{
+  "dataset": "Sintético generado con reglas expertas (docs/REGLAS_RIESGO.md)",
+  "n_registros": 4000,
+  "clases": [
+    "Bajo",
+    "Medio",
+    "Alto"
+  ],
+  "validacion_cruzada_5fold": {
+    "random_forest": {
+      "precision": 0.8908,
+      "recall": 0.9023,
+      "f1": 0.8956
+    },
+    "xgboost": {
+      "precision": 0.8999,
+      "recall": 0.8975,
+      "f1": 0.8982
+    },
+    "svm": {
+      "precision": 0.8835,
+      "recall": 0.9004,
+      "f1": 0.8905
+    }
+  },
+  "holdout_20pct": {
+    "random_forest": {
+      "accuracy": 0.92,
+      "precision": 0.9012,
+      "recall": 0.9026,
+      "f1": 0.9006,
+      "matriz_confusion": [
+        [
+          451,
+          25,
+          0
+        ],
+        [
+          16,
+          149,
+          6
+        ],
+        [
+          0,
+          17,
+          136
+        ]
+      ]
+    },
+    "xgboost": {
+      "accuracy": 0.925,
+      "precision": 0.9041,
+      "recall": 0.9004,
+      "f1": 0.9019,
+      "matriz_confusion": [
+        [
+          459,
+          17,
+          0
+        ],
+        [
+          17,
+          145,
+          9
+        ],
+        [
+          0,
+          17,
+          136
+        ]
+      ]
+    },
+    "svm": {
+      "accuracy": 0.915,
+      "precision": 0.8876,
+      "recall": 0.8945,
+      "f1": 0.8902,
+      "matriz_confusion": [
+        [
+          451,
+          25,
+          0
+        ],
+        [
+          13,
+          146,
+          12
+        ],
+        [
+          0,
+          18,
+          135
+        ]
+      ]
+    }
+  },
+  "modelo_seleccionado": "xgboost",
+  "criterio_seleccion": "mayor F1 macro en validación cruzada"
+}
